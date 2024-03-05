@@ -6,13 +6,13 @@ import uvicorn
 from contextlib import asynccontextmanager
 
 from database.connection import conn
+import env
 
 from routes.sayings import saying_router
 from routes.fourchars import fourchar_router
 from routes.category import category_router
 from pixabay.pixabay_route import pixabay_router
-
-from database.connection import settings
+from create_image.create_image_route import create_image_router
 
 from starlette.middleware.cors import CORSMiddleware
 
@@ -49,6 +49,7 @@ app.include_router(saying_router, prefix="/saying")  # 명언
 app.include_router(fourchar_router, prefix="/fourchar")  # 사자성어
 app.include_router(category_router, prefix="/category")  # 명언 카테고리
 app.include_router(pixabay_router, prefix="/pixabay")  # 이미지 크롤링
+app.include_router(create_image_router, prefix="/create_image")  # 이미지 생성
 
 
 # 첫 화면
@@ -61,4 +62,4 @@ async def main() -> dict:
 
 # uvicorn 앱 실행
 if __name__ == "__main__":
-    uvicorn.run("main:app", host=settings.UVICORN_IP, port=settings.UVICORN_PORT, reload=True)
+    uvicorn.run("main:app", host=env.UVICORN_IP, port=env.UVICORN_PORT, reload=True)

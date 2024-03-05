@@ -7,7 +7,9 @@ END_POINT = os.getenv("END_POINT")
 
 DATABASE_CONNECTION_STRING = os.getenv("DATABASE_CONNECTION_STRING")
 UVICORN_IP = os.getenv("UVICORN_IP")
-UVICORN_PORT = os.getenv("UVICORN_PORT")
+UVICORN_PORT = int(os.getenv("UVICORN_PORT"))
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 """
 main.py가 있는 디렉터리에 .env 파일을 생성하고 작성해야 한다.
 
