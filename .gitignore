@@ -185,5 +185,6 @@ pyrightconfig.json
 pyvenv.cfg
 pip-selfcheck.json
 
-
+# 이미지 폴더
+images/
 # End of https://www.toptal.com/developers/gitignore/api/python,venv

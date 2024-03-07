@@ -1,6 +1,7 @@
 # create_image/create_image_model.py
 
-from sqlmodel import SQLModel, Field, Relationship
+from fastapi import UploadFile
+from sqlmodel import SQLModel, Field, Relationship, BLOB
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -14,3 +15,10 @@ class CreateImage(SQLModel, table=True):
     category_id: Optional[int] = Field(default=None, foreign_key="pixabaycategory.id")
 
     pixabay_category: Optional["PixabayCategory"] = Relationship(back_populates="created_data")
+
+
+class CreateImageForm(SQLModel):
+    prompt: Optional[str] = None
+    text_file: Optional[UploadFile] = None
+    quantity: int = 1
+    category: str

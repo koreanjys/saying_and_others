@@ -6,7 +6,7 @@ import uvicorn
 from contextlib import asynccontextmanager
 
 from database.connection import conn
-import env
+import saying_env
 
 from routes.sayings import saying_router
 from routes.fourchars import fourchar_router
@@ -21,7 +21,7 @@ from starlette.middleware.cors import CORSMiddleware
 @asynccontextmanager
 async def lifesapn(app: FastAPI):
     # 앱 시작 시 작동되는 코드 작성
-    conn()  # DB 연결 및 초기화
+    # conn()  # DB 연결 및 초기화(alembic 사용으로 사용하지 않음)
 
     yield
     # 앱 종료 시 작동되는 코드 작성
@@ -62,4 +62,4 @@ async def main() -> dict:
 
 # uvicorn 앱 실행
 if __name__ == "__main__":
-    uvicorn.run("main:app", host=env.UVICORN_IP, port=env.UVICORN_PORT, reload=True)
+    uvicorn.run("main:app", host=saying_env.UVICORN_IP, port=saying_env.UVICORN_PORT, reload=True)

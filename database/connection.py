@@ -1,7 +1,7 @@
 # database/connection.py
 
 from sqlmodel import SQLModel, Session, create_engine
-import env
+import saying_env
 
 
 def conn():
@@ -14,4 +14,4 @@ def get_session():
         yield session  # 각 작업마다 독립된 세션을 연결하기 위해 제너레이터 형태로 반환
 
 
-engine_url = create_engine(url=env.DATABASE_CONNECTION_STRING, echo=True)  # DB 엔진 생성
+engine_url = create_engine(url=saying_env.DATABASE_CONNECTION_STRING, echo=True)  # DB 엔진 생성

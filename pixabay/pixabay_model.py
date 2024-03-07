@@ -9,11 +9,15 @@ if TYPE_CHECKING:
 
 class PixabayData(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    image_id: int
+    isnew: int
     type: Optional[str] = None
     tags: Optional[str] = None
     user: Optional[str] = None
     keyword: Optional[str] = Field(index=True)
     imageURL: Optional[str] = None
+    imageWidth: Optional[int] = None
+    imageHeight: Optional[int] = None
     created_at: Optional[datetime] = datetime.utcnow() + timedelta(hours=9)
     category_id: Optional[int] = Field(default=None, foreign_key="pixabaycategory.id")
 
