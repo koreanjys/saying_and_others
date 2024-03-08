@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 from models.fourchars import FourChar, FourCharUpdate
 from models.category import Category
 from tools.pagination import paging
+from tools.create_good_bad import create_good_bad
 
 from database.connection import get_session
-
 
 fourchar_router = APIRouter(tags=["FourChars"])
 
@@ -177,3 +177,21 @@ async def fourchar_filtering(
         "total_page": total_page,
         "content": filtered_fourchars
     }
+
+
+@fourchar_router.get("/create/")
+async def create_texts(ids: List[int]=Query(...), session=Depends(get_session)):  # 긍부정 텍스트 생성
+    for id in ids:
+        fourchar = session.get(FourChar, id)
+        if fourchar:
+            good_text, bad_text = await create_good_bad(meaning=fourchar.contents_detail)
+            fourchar.contents_good = good_text
+            fourchar.contents_bad = bad_text
+            session.add(fourchar)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="해당 id를 찾을 수 없습니다."
+            )
+    session.commit()
+    return {"message": "긍부정 텍스트 생성 완료."}

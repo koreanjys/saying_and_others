@@ -1,9 +1,10 @@
 # main.py
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 import uvicorn
 from contextlib import asynccontextmanager
+import logging
 
 from database.connection import conn
 import saying_env
@@ -42,6 +43,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# 로그 파일 설정
+logging.basicConfig(filename='log.log', level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+@app.middleware("http")
+async def log_middleware(request: Request, call_next):
+    logger.info(f"Request: {request.method} {request.url}\n{'-'*100}")
+    response = await call_next(request)
+    logger.info(f"Response: {response.status_code}\n{'-'*100}")
+    return response
 
 
 # 라우트 등록

@@ -21,6 +21,8 @@ class Saying(SQLModel, table=True):  # 명언 테이블 모델 클래스
     author: str = Field(index=True, nullable=True)        # 발화자*
     contents_kr: str = Field(index=True, nullable=True)   # 뜻 풀이*
     contents_eng: str = Field(index=True, default="", nullable=True)      # 영문 명언
+    contents_good: str = ""
+    contents_bad: str = ""
 
     # 자동생성 필드
     type_id: Optional[int] = 0
@@ -60,6 +62,8 @@ class SayingUpdate(SQLModel):  # 명언 수정 모델 클래스
     contents_divided: Optional[str] = None
     continent: Optional[str] = None
     use_yn: Optional[int] = None
+    contents_good: Optional[str] = None  # 긍정
+    contents_bad: Optional[str] = None  # 부정
 
     # 모델 설정
     model_config = {

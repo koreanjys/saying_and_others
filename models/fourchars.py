@@ -20,7 +20,9 @@ class FourChar(SQLModel, table=True):  # 사자성어 테이블 모델 클래스
     contents_kr: str = Field(index=True, nullable=True)       # 사자성어(한글)*
     category: str = Field(index=True, nullable=True)          # 카테고리*
     contents_detail: str = Field(index=True, nullable=True)   # 뜻 풀이*
-    contents_zh: Optional[str] = ""                                      # 사자성어(한문)
+    contents_zh: Optional[str] = ""                           # 사자성어(한문)
+    contents_good: str = ""
+    contents_bad: str = ""
 
     # 자동생성 필드
     type_id: Optional[int] = 1
@@ -62,6 +64,8 @@ class FourCharUpdate(SQLModel):  # 사자성어 수정 모델 클래스
     author: Optional[str] = None
     continent: Optional[str] = None
     use_yn: Optional[int] = None
+    contents_good: Optional[str] = None  # 긍정
+    contents_bad: Optional[str] = None  # 부정
 
     # 모델 설정
     model_config = {

@@ -1,34 +1,16 @@
 # create_image/create_image_route.py
 
 from fastapi import APIRouter, Query, File, UploadFile, Form, Body, Depends, status, HTTPException
-from sqlmodel import select, func, join
+from fastapi.responses import FileResponse
+from sqlmodel import select, func, join, delete
 from tools.pagination import paging
 from database.connection import get_session
-from typing import Optional
-from openai import OpenAI
-import saying_env
+from typing import Optional, List
 
 from pixabay.pixabay_model import PixabayCategory
-from create_image.create_image_model import CreateImage, CreateImageForm
+from create_image.create_image_model import CreateImage
 
 create_image_router = APIRouter(tags=["이미지 생성"])
-
-# OpenAI 클라이언트 생성
-client = OpenAI(api_key=saying_env.OPENAI_API_KEY)
-
-
-# 프롬프트 받아서 이미지 생성하는 함수
-def process_prompt(prompt: str, quantity: int):
-    # DALL-E를 사용한 이미지 생성 요청
-    response_image = client.images.generate(
-        model="dall-e-3",
-        prompt=prompt,
-        size="1024x1024",
-        quality="hd",
-        n=quantity,
-        response_format="b64_json"
-    )
-    return {"response": response_image, "data": response_image.data, "datum": response_image.data[0].b64_json}
 
 
 @create_image_router.get("/")
@@ -43,7 +25,6 @@ async def retrieve_all_created_images(
 
     if keyword:
         statement = statement.where(CreateImage.prompt.like(f"%{keyword}%"))
-        # images = session.exec(statement).all()  # 이건 왜 정의해놨지?
     if category:
         statement = statement.join(PixabayCategory).where(PixabayCategory.category==category)
 
@@ -83,16 +64,15 @@ async def create_image(
     quantity: int=Form(default=1),
     category: str=Form(default=None)
     ):
-    # if not category:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_400_BAD_REQUEST,
-    #         detail="카테고리를 입력해주세요."
-    #     )
-    # if quantity > 5:  # 수량 제한": quantity}
-    #     quantity = 5
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="카테고리를 입력해주세요."
+        )
+    if quantity > 5:  # 수량 제한": quantity}
+        quantity = 5
 
     if prompt:
-        print(prompt, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
         return {"result": prompt, "category": category, "quantity": quantity}
     else:
         if text_file is not None and text_file.content_type != "text/plain":
@@ -103,5 +83,21 @@ async def create_image(
         contents = await text_file.read()
         contents = contents.decode("utf-8")
         lines = contents.split("\r\n")
-        print(lines, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
         return {"result": lines, "category": category, "quantity": quantity}
+
+
+@create_image_router.delete("/delete/")
+async def delete_created_images(ids: List[int]=Query(...), session=Depends(get_session)):
+    for id in ids:
+        created_image = session.get(CreateImage, id)
+        if created_image:
+            session.delete(created_image)
+            session.commit()
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="선택한 id가 존재하지 않습니다."
+            )
+    return {
+        "message": "삭제를 완료했습니다."
+    }

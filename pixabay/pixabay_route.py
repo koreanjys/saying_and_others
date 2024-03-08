@@ -75,9 +75,9 @@ async def retrieve_all_data(keyword: str=Query(default=None),
                 )
                 isexist = session.exec(select(PixabayData).where(PixabayData.image_id==pixabay_instance.image_id)).first()
                 if isexist:  # image_id가 이미 존재하면 add 하지 않음
-                    # isexist.isnew = 0
-                    # session.add(isexist)
-                    # session.commit()
+                    isexist.isnew = 0
+                    session.add(isexist)
+                    session.commit()
                     continue
                 session.add(pixabay_instance)
             session.commit()

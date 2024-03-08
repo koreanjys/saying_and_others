@@ -1,7 +1,8 @@
 # create_image/create_image_model.py
 
-from fastapi import UploadFile
+from fastapi import UploadFile, Form, File
 from sqlmodel import SQLModel, Field, Relationship, BLOB
+from datetime import datetime, timedelta
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -13,12 +14,7 @@ class CreateImage(SQLModel, table=True):
     created_url: Optional[str] = None
     prompt: Optional[str] = None
     category_id: Optional[int] = Field(default=None, foreign_key="pixabaycategory.id")
+    created_at: Optional[datetime] = datetime.utcnow() + timedelta(hours=9)
+    isnew: int = 1
 
     pixabay_category: Optional["PixabayCategory"] = Relationship(back_populates="created_data")
-
-
-class CreateImageForm(SQLModel):
-    prompt: Optional[str] = None
-    text_file: Optional[UploadFile] = None
-    quantity: int = 1
-    category: str

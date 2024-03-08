@@ -7,6 +7,7 @@ from typing import Optional, List, TYPE_CHECKING
 if TYPE_CHECKING:
     from create_image.create_image_model import CreateImage
 
+
 class PixabayData(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     image_id: int
