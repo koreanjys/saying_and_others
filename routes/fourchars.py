@@ -181,6 +181,9 @@ async def fourchar_filtering(
 
 @fourchar_router.get("/create/")
 async def create_texts(ids: List[int]=Query(...), session=Depends(get_session)):  # 긍부정 텍스트 생성
+    
+    start_time = datetime.now()  # 함수 실행시간 측정 시작
+
     for id in ids:
         fourchar = session.get(FourChar, id)
         if fourchar:
@@ -194,4 +197,8 @@ async def create_texts(ids: List[int]=Query(...), session=Depends(get_session)):
                 detail="해당 id를 찾을 수 없습니다."
             )
     session.commit()
-    return {"message": "긍부정 텍스트 생성 완료."}
+
+    end_time = datetime.now()  # 함수 실행시간 측정 종료
+    execution_time = end_time - start_time
+
+    return {"message": "긍부정 텍스트 생성 완료.", "함수 실행시간": execution_time}

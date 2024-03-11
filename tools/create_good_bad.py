@@ -16,13 +16,15 @@ async def create_good_bad(meaning, to_good_prompt=None, to_bad_prompt=None):
     
     # ChatGPT를 사용한 텍스트 분류 요청 (긍정적 해석)
     positive_response = client.chat.completions.create(
-        model="gpt-4",
+        # model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": f"'{meaning}'. {to_good_prompt}"}],
     )
 
     # ChatGPT를 사용한 텍스트 분류 요청 (부정적 해석)
     negative_response = client.chat.completions.create(
-        model="gpt-4",
+        # model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": f"'{meaning}'. {to_bad_prompt}"}],
     )
 

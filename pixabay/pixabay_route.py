@@ -38,7 +38,6 @@ async def retrieve_all_data(keyword: str=Query(default=None),
     쿼리 crawling_on=1 은 크롤링을 하고, 데이터베이스에 저장하는 프로세스를 진행함. 그 다음 데이터베이스에서 키워드와 카테고리가 일치하는 데이터를 불러옴\n
     쿼리 crawling_on=0 은 크롤링을 하지 않고, 데이터베이스에서 키워드와 카테고리가 일치하는 데이터를 불러옴
     """
-    
     if crawling_on == 1:
         if not category:
             raise HTTPException(

@@ -4,11 +4,14 @@ from fastapi import APIRouter, Query, File, UploadFile, Form, Body, Depends, sta
 from fastapi.responses import FileResponse
 from sqlmodel import select, func, join, delete
 from tools.pagination import paging
+from tools.create_image import process_prompt
 from database.connection import get_session
 from typing import Optional, List
 
 from pixabay.pixabay_model import PixabayCategory
 from create_image.create_image_model import CreateImage
+
+from datetime import datetime
 
 create_image_router = APIRouter(tags=["이미지 생성"])
 
@@ -62,18 +65,39 @@ async def create_image(
     prompt: str=Form(default=None),
     text_file: UploadFile=File(default=None),
     quantity: int=Form(default=1),
-    category: str=Form(default=None)
+    category: str=Form(default=None),
+    session=Depends(get_session)
     ):
+
+    start_time = datetime.now()  # 함수 시간 측정 (시작 시간)
+
     if not category:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="카테고리를 입력해주세요."
         )
-    if quantity > 5:  # 수량 제한": quantity}
-        quantity = 5
+    # 카테고리 인스턴스 불러오기
+    statement = select(PixabayCategory).where(PixabayCategory.category==category)
+    try:
+        category_instance = session.exec(statement).one()
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="존재하지 않는 카테고리 입니다."
+        )
+    if quantity != 1:  # 현재 dall-e-3 모델은 quantity 파라미터가 1만 받아짐
+        quantity = 1
 
     if prompt:
-        return {"result": prompt, "category": category, "quantity": quantity}
+        created_url = await process_prompt(prompt=prompt, quantity=quantity)
+        created_image = CreateImage(created_url=created_url, prompt=prompt, pixabay_category=category_instance, isnew=1)
+        session.add(created_image)
+        session.commit()
+        
+        end_time = datetime.now()  # 함수 시간 측정 (종료 시간)
+        execution_time = end_time - start_time
+
+        return {"message": "이미지 생성이 완료되었습니다.", "실행 시간": execution_time}
     else:
         if text_file is not None and text_file.content_type != "text/plain":
             raise HTTPException(
