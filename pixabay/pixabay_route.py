@@ -3,6 +3,8 @@ from fastapi.responses import FileResponse
 from sqlmodel import select, func, or_, join, delete
 from database.connection import get_session
 from tools.pagination import paging
+from tools.pixabay_image import run_urls_to_images
+
 import requests
 import saying_env
 from typing import List
@@ -11,6 +13,7 @@ from pixabay.pixabay_model import PixabayData, PixabayCategory
 from create_image.create_image_model import CreateImage
 
 import base64
+import time
 """
 model을 불러올 때, 필요한 model 뿐만 아니라 Relationships 으로 연결된 모든 모델을 불러와야 하기 때문에
 그 부분을 추후에 신경써서 설계를 하도록 하자.
@@ -59,10 +62,12 @@ async def retrieve_all_data(keyword: str=Query(default=None),
         get_api = requests.get(url=saying_env.END_POINT, params=params)
         try:
             image_data = get_api.json()["hits"]
-            for datum in image_data:
+            image_urls = [datum["webformatURL"] for datum in image_data]
+            images = await run_urls_to_images(image_urls)
+            for datum, image in zip(image_data, images):
                 pixabay_instance = PixabayData(
                     image_id=datum["id"],
-                    imageURL=datum["webformatURL"],
+                    imageURL=image,
                     tags=datum["tags"],
                     user=datum["user"],
                     type=datum["type"],
@@ -80,10 +85,10 @@ async def retrieve_all_data(keyword: str=Query(default=None),
                     continue
                 session.add(pixabay_instance)
             session.commit()
-        except:
+        except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="API에서 해당 데이터를 가져올 수 없습니다."
+                detail=f"API에서 해당 데이터를 가져올 수 없습니다.{e}"
             )
     
     statement = select(PixabayData)

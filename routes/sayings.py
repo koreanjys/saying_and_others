@@ -1,13 +1,14 @@
 # routes/sayings.py
 
 from fastapi import APIRouter, HTTPException, status, Depends, Query, Body
-from sqlmodel import select, delete, func, or_
+from sqlmodel import select, delete, func, or_, and_
 from typing import List, Optional
 from datetime import datetime, timedelta
 
 from models.sayings import Saying, SayingUpdate
 from models.category import Category
 from tools.pagination import paging
+from tools.create_good_bad import create_good_bad
 
 from database.connection import get_session
 
@@ -129,17 +130,28 @@ async def saying_filtering(
         consonants: List[str]=Query(default=None),
         p: int=Query(default=1),
         size: int=Query(default=15),
+        isnull: int=Query(default=None),
         session=Depends(get_session)
         ) -> dict:
 
     statement = select(Saying)
+
+    if isnull == 1:  # 긍부정 생성 안된것만
+        statement = statement.where(and_(Saying.contents_good=="", Saying.contents_bad==""))
+    elif isnull == 0:  # 긍정 or 부정 생성 된것만
+        statement = statement.where(or_(Saying.contents_good!="", Saying.contents_bad!=""))
 
     if categories:  # 카테고리 필터링 됐다면,
         conditions = [Saying.category==cat for cat in categories]
         statement = statement.where(or_(*conditions))
 
     if keyword:  # 검색어 필터링 됐다면,
-        statement = statement.where(or_(Saying.contents_kr.like(f"%{keyword}%"), Saying.contents_eng.like(f"%{keyword}%")))
+        statement = statement.where(or_(
+            Saying.contents_kr.like(f"%{keyword}%"),
+            Saying.contents_eng.like(f"%{keyword}%"),
+            Saying.contents_good.like(f"%{keyword}%"),
+            Saying.contents_bad.like(f"%{keyword}%")
+        ))
 
     if consonants:  # 알파벳 필터링 됐다면,
         conditions = [Saying.contents_eng.ilike(f"{consonant}%") for consonant in consonants]
@@ -160,3 +172,28 @@ async def saying_filtering(
         "total_page": total_page,
         "content": filtered_sayings
     }
+
+
+@saying_router.get("/create/")
+async def create_texts(ids: List[int]=Query(...), session=Depends(get_session)):  # 긍부정 텍스트 생성
+    
+    start_time = datetime.now()  # 함수 실행시간 측정 시작
+
+    for id in ids:
+        saying = session.get(Saying, id)
+        if saying:
+            good_text, bad_text = await create_good_bad(meaning=saying.contents_detail)
+            saying.contents_good = good_text
+            saying.contents_bad = bad_text
+            session.add(saying)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="해당 id를 찾을 수 없습니다."
+            )
+    session.commit()
+
+    end_time = datetime.now()  # 함수 실행시간 측정 종료
+    execution_time = end_time - start_time
+
+    return {"message": "긍부정 텍스트 생성 완료.", "함수 실행시간": execution_time}

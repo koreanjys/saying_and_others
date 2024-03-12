@@ -130,17 +130,29 @@ async def fourchar_filtering(
         consonants: List[str]=Query(default=None),
         p: int=Query(default=1),
         size: int=Query(default=15),
+        isnull: int=Query(default=None),
         session=Depends(get_session)
         ) -> dict:
     
     statement = select(FourChar)
+
+    if isnull == 1:  # 긍부정 생성 안된것만
+        statement = statement.where(and_(FourChar.contents_good=="", FourChar.contents_bad==""))
+    elif isnull == 0:  # 긍정 or 부정 생성 된것만
+        statement = statement.where(or_(FourChar.contents_good!="", FourChar.contents_bad!=""))
 
     if categories:  # 카테고리 필터가 됐다면,
         conditions = [FourChar.category==cat for cat in categories]
         statement = statement.where(or_(*conditions))
 
     if keyword:  # 검색어 필터가 됐다면,
-        statement = statement.where(or_(FourChar.contents_detail.like(f"%{keyword}%"), FourChar.contents_kr.like(f"%{keyword}%"), FourChar.contents_zh.like(f"%{keyword}%")))
+        statement = statement.where(or_(
+            FourChar.contents_detail.like(f"%{keyword}%"),
+            FourChar.contents_kr.like(f"%{keyword}%"),
+            FourChar.contents_zh.like(f"%{keyword}%"),
+            FourChar.contents_good.like(f"%{keyword}%"),
+            FourChar.contents_bad.like(f"%{keyword}%")
+        ))
 
     if consonants:  # 초성 필터가 됐다면,
         ranges = {

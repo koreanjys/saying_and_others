@@ -1,6 +1,6 @@
 # pixabay/pixabay_model.py
 
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field, Relationship, Column, Text
 from datetime import datetime, timedelta
 from typing import Optional, List, TYPE_CHECKING
 
@@ -16,7 +16,7 @@ class PixabayData(SQLModel, table=True):
     tags: Optional[str] = None
     user: Optional[str] = None
     keyword: Optional[str] = Field(index=True)
-    imageURL: Optional[str] = None
+    imageURL: str = Field(sa_column=Column(Text(length=300000)))  # URL이 매우 길다.
     imageWidth: Optional[int] = None
     imageHeight: Optional[int] = None
     created_at: Optional[datetime] = datetime.utcnow() + timedelta(hours=9)

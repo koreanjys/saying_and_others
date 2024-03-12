@@ -12,6 +12,7 @@ from pixabay.pixabay_model import PixabayCategory
 from create_image.create_image_model import CreateImage
 
 from datetime import datetime
+import asyncio
 
 create_image_router = APIRouter(tags=["이미지 생성"])
 
@@ -107,7 +108,25 @@ async def create_image(
         contents = await text_file.read()
         contents = contents.decode("utf-8")
         lines = contents.split("\r\n")
-        return {"result": lines, "category": category, "quantity": quantity}
+        tasks = []
+        for line in lines:
+            task = asyncio.create_task(process_prompt(line))
+            tasks.append(task)
+        results = await asyncio.gather(*tasks)
+        n = 0
+        for img in results:
+            created_image = CreateImage(
+                created_url=img,
+                prompt=lines[n],
+                pixabay_category=category_instance,
+                isnew=1
+            )
+            n += 1
+            session.add(created_image)
+        session.commit()
+        end_time = datetime.now()  # 함수 시간 측정 (종료 시간)
+        execution_time = end_time - start_time
+        return {"message": "이미지 생성이 완료되었습니다.", "texts": lines, "실행 시간": execution_time}
 
 
 @create_image_router.delete("/delete/")
